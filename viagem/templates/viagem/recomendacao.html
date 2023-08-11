@@ -1,0 +1,33 @@
+{% extends 'paginas/base.html' %} 
+
+
+
+{% block conteudo %} 
+
+<div class="row"> 
+    <div class="mx-auto h2">
+        Destinos recomendados 
+    </div>
+</div>
+
+<div class="row mt-3">
+    <table class="table table-striped table-dark">
+        <thead>
+        <tr>
+            <th scope="col">Destinos</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        
+            {% for destino in destinos %}
+            <tr></tr>
+            <td>{{destino}}</td>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+{% endblock %}
