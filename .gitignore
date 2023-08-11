@@ -1,0 +1,12 @@
+# Arquivos de ambiente virtual
+env/
+
+# Arquivo de banco de dados SQLite
+db.sqlite3
+
+# Arquivos de configuração do VSCode
+.vscode/
+
+# Arquivos de cache
+__pycache__/
+*.pyc
