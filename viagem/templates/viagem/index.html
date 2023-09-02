@@ -1,0 +1,47 @@
+{% extends 'paginas/base.html' %}
+
+{% block conteudo %}
+
+<div class="row">
+    <div class="mx-auto h2">
+        Sistema de recomendação de viagem
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="mx-auto h4">
+        Selecione um destino visitado   
+    </div> 
+</div>
+<div class="row">
+    <div class="col-12">
+    <form action="{% url 'recomendacao' %}" method="POST">
+        {% csrf_token %}
+        <select class="custom-select" name="valor-recomendacao">
+            <option selected disabled>Selecione o destino</option>
+            <option value="Bento Gonçalves">Bento Gonçalves</option>
+            <option value="Bonito">Bonito</option>
+            <option value="Cabaceiras">Cabaceiras</option>
+            <option value="Chapada dos Guimaraes">Chapada dos Guimaraes</option>
+            <option value="Chapada dos Veadeiros">Chapada dos Veadeiros</option>
+            <option value="Fernando Noronha">Fernando Noronha</option>
+            <option value="Floresta Amazonica">Floresta Amazonica</option>
+            <option value="Floripa">Floripa</option>
+            <option value="Olinda">Olinda</option>
+            <option value="Ouro Preto">Ouro Preto</option>
+            <option value="Paraty">Paraty</option>
+            <option value="Porto Alegre">Porto Alegre</option>
+            <option value="Rio de Janeiro">Rio de Janeiro</option>
+            <option value="Salvador">Salvador</option>
+            <option value="Sao Paulo">Sao Paulo</option>
+        </select>
+        <div class="row mt-3">
+            <div class="mx-auto">
+                <button class="btn btn-primary">Recomendar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+{% endblock conteudo %}
