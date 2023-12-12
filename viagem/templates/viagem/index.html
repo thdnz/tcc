@@ -17,8 +17,7 @@
     <div class="col-12">
     <form action="{% url 'recomendacao' %}" method="POST">
         {% csrf_token %}
-        <select class="custom-select" name="valor-recomendacao">
-            <option selected disabled>Selecione o destino</option>
+        <select class="custom-select custom-select-lg" name="valor-recomendacao" size=15 multiple>
             <option value="Bento Gonçalves">Bento Gonçalves</option>
             <option value="Bonito">Bonito</option>
             <option value="Cabaceiras">Cabaceiras</option>
