@@ -10,9 +10,6 @@ from django.conf import settings
 def index(request): # View para a página inicial
     """ Lista de viagens """ 
 
-    if not request.user.is_authenticated: # Verifica se o usuário está logado
-        return  HttpResponseRedirect(reverse('login')) 
-
     context = { # Dicionário com as viagens
         'viagens': Viagem.objects.all() # Lista de viagens
     }
@@ -20,19 +17,29 @@ def index(request): # View para a página inicial
     return render(request, 'viagem/index.html', context) # Renderiza a página index.html
 
 def recomendacao(request): # View para a página de recomendação
-    """ Recomendação de destino viajado """ 
-    if not request.user.is_authenticated:
-        return  HttpResponseRedirect(reverse('login'))  
-    #puxa o modelo treinado carregado do arquivo apps.py
-    distances, suggestions = apps.ViagemConfig.model.kneighbors(apps.ViagemConfig.travel_pivot.loc[request.POST['valor-recomendacao'], :].values.reshape(1, -1))
+    """ Recomendação de destino viajado """  
+    valores_selecionados = request.POST.getlist('valor-recomendacao')
 
-    lista_destinos = [] # Lista de destinos
-    for i in range(len(suggestions)): # Loop para percorrer a lista de sugestões
-        for j in apps.ViagemConfig.travel_pivot.index[suggestions[i]]: # Loop para percorrer a lista de destinos
-            lista_destinos.append(j) # Adiciona os destinos na lista
+    lista_destinos = set()  # Conjunto de destinos
 
-    context = { # Dicionário com os destinos
-        'destinos': lista_destinos # Lista de destinos
+    for valor_selecionado in valores_selecionados:
+        # Puxe o modelo treinado carregado do arquivo apps.py
+        distances, suggestions = apps.ViagemConfig.model.kneighbors(
+            apps.ViagemConfig.travel_pivot.loc[valor_selecionado, :].values.reshape(1, -1)
+        )
+
+        # Loop para percorrer a lista de sugestões
+        for i in range(len(suggestions)):
+            # Loop para percorrer a lista de destinos
+            for j in apps.ViagemConfig.travel_pivot.index[suggestions[i]]:
+                # Adiciona os destinos no conjunto
+                lista_destinos.add(j)
+
+    # Converta o conjunto de volta para uma lista
+    lista_destinos = list(lista_destinos)
+
+    context = {
+        'destinos': lista_destinos
     }
 
     return render(request, 'viagem/recomendacao.html', context) # Renderiza a página recomendacao.html

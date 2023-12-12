@@ -41,7 +41,6 @@
         <!--MENU - NAVBAR-->
         {% block menu %}
         <nav class="navbar navbar-expand-lg navbar-dark bg-survey font-115 shadow">
-
             <div class="container">
                 <a class="navbar-brand" href="{% url 'index' %}">
                     <img src="{% static 'img/logo.jpg' %}" height="40" alt="">
@@ -51,28 +50,29 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
-
-
                     <ul class="navbar-nav ml-auto">
-
                         {% if request.user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdownMenuLink"
-                                role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fa fa-user-circle" aria-hidden="true"></i>
-                                <span id="username">{{ request.user }}</span>
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                                <a class="dropdown-item" href="{% url 'logout' %}">
-                                    <i class="fa fa-sign-out" aria-hidden="true"></i>
-                                    Sair</a>
-                            </div>
-                        </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdownMenuLink"
+                                    role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-user-circle" aria-hidden="true"></i>
+                                    <span id="username">{{ request.user }}</span>
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="fa fa-sign-out" aria-hidden="true"></i>
+                                        Sair</a>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link text-white" href="{% url 'login' %}">
+                                    <i class="fa fa-sign-in-alt" aria-hidden="true"></i>
+                                    Login</a>
+                            </li>
                         {% endif %}
-
                     </ul>
                 </div>
-
                 <!-- fim do container -->
             </div>
         </nav>
