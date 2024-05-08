@@ -18,7 +18,7 @@ Este é um sistema web que utiliza a metodologia de filtragem colaborativa para 
 
 - Python 3.9.13
 - Django 4.1.3
-- Outras bibliotecas e dependências (listar aqui)
+
 
 ## Como Usar
 
