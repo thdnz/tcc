@@ -3,6 +3,7 @@ All of pandas' ExtensionArrays.
 
 See :ref:`extending.extension-types` for more.
 """
+
 from pandas.core.arrays import (
     ArrowExtensionArray,
     ArrowStringArray,
@@ -12,7 +13,7 @@ from pandas.core.arrays import (
     FloatingArray,
     IntegerArray,
     IntervalArray,
-    PandasArray,
+    NumpyExtensionArray,
     PeriodArray,
     SparseArray,
     StringArray,
@@ -28,7 +29,7 @@ __all__ = [
     "FloatingArray",
     "IntegerArray",
     "IntervalArray",
-    "PandasArray",
+    "NumpyExtensionArray",
     "PeriodArray",
     "SparseArray",
     "StringArray",

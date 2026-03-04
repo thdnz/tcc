@@ -1,6 +1,9 @@
 import pytest
 
-from pandas import DataFrame
+from pandas import (
+    DataFrame,
+    Series,
+)
 import pandas._testing as tm
 from pandas.core.reshape.merge import (
     MergeError,
@@ -39,8 +42,7 @@ def test_merge_cross_error_reporting(kwargs):
     left = DataFrame({"a": [1, 3]})
     right = DataFrame({"b": [3, 4]})
     msg = (
-        "Can not pass on, right_on, left_on or set right_index=True or "
-        "left_index=True"
+        "Can not pass on, right_on, left_on or set right_index=True or left_index=True"
     )
     with pytest.raises(MergeError, match=msg):
         merge(left, right, how="cross", **kwargs)
@@ -91,8 +93,17 @@ def test_join_cross_error_reporting():
     left = DataFrame({"a": [1, 3]})
     right = DataFrame({"a": [3, 4]})
     msg = (
-        "Can not pass on, right_on, left_on or set right_index=True or "
-        "left_index=True"
+        "Can not pass on, right_on, left_on or set right_index=True or left_index=True"
     )
     with pytest.raises(MergeError, match=msg):
         left.join(right, how="cross", on="a")
+
+
+def test_merge_cross_series():
+    # GH#54055
+    ls = Series([1, 2, 3, 4], index=[1, 2, 3, 4], name="left")
+    rs = Series([3, 4, 5, 6], index=[3, 4, 5, 6], name="right")
+    res = merge(ls, rs, how="cross")
+
+    expected = merge(ls.to_frame(), rs.to_frame(), how="cross")
+    tm.assert_frame_equal(res, expected)

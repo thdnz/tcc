@@ -19,19 +19,15 @@ class MySQLIntrospection(DatabaseIntrospection):
             # column.
             for column, typ, null, key, default, extra in cursor.fetchall():
                 if column == description.name:
-                    # Using OGRGeomType to convert from OGC name to Django field.
-                    # MySQL does not support 3D or SRIDs, so the field params
-                    # are empty.
+                    # Using OGRGeomType to convert from OGC name to Django
+                    # field. MySQL does not support 3D or SRIDs, so the field
+                    # params are empty.
                     field_type = OGRGeomType(typ).django
                     field_params = {}
                     break
         return field_type, field_params
 
     def supports_spatial_index(self, cursor, table_name):
-        # Supported with MyISAM/Aria, or InnoDB on MySQL 5.7.5+/MariaDB.
+        # Supported with MyISAM, Aria, or InnoDB.
         storage_engine = self.get_storage_engine(cursor, table_name)
-        if storage_engine == "InnoDB":
-            if self.connection.mysql_is_mariadb:
-                return True
-            return self.connection.mysql_version >= (5, 7, 5)
-        return storage_engine in ("MyISAM", "Aria")
+        return storage_engine in ("MyISAM", "Aria", "InnoDB")

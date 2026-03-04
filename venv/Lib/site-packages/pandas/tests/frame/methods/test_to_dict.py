@@ -2,17 +2,23 @@ from collections import (
     OrderedDict,
     defaultdict,
 )
-from datetime import datetime
+from datetime import (
+    datetime,
+    timezone,
+)
 
 import numpy as np
 import pytest
-import pytz
 
 from pandas import (
+    NA,
     DataFrame,
     Index,
+    Interval,
     MultiIndex,
+    Period,
     Series,
+    Timedelta,
     Timestamp,
 )
 import pandas._testing as tm
@@ -20,7 +26,6 @@ import pandas._testing as tm
 
 class TestDataFrameToDict:
     def test_to_dict_timestamp(self):
-
         # GH#11247
         # split/records producing np.datetime64 rather than Timestamps
         # on datetime64[ns] dtypes only
@@ -80,11 +85,10 @@ class TestDataFrameToDict:
             df.to_dict(orient="xinvalid")
 
     @pytest.mark.parametrize("orient", ["d", "l", "r", "sp", "s", "i"])
-    def test_to_dict_short_orient_warns(self, orient):
+    def test_to_dict_short_orient_raises(self, orient):
         # GH#32515
         df = DataFrame({"A": [0, 1]})
-        msg = "Using short name for 'orient' is deprecated"
-        with tm.assert_produces_warning(FutureWarning, match=msg):
+        with pytest.raises(ValueError, match="not understood"):
             df.to_dict(orient=orient)
 
     @pytest.mark.parametrize("mapping", [dict, defaultdict(list), OrderedDict])
@@ -100,19 +104,19 @@ class TestDataFrameToDict:
             for k2, v2 in v.items():
                 assert v2 == recons_data[k][k2]
 
-        recons_data = DataFrame(test_data).to_dict("list", mapping)
+        recons_data = DataFrame(test_data).to_dict("list", into=mapping)
 
         for k, v in test_data.items():
             for k2, v2 in v.items():
                 assert v2 == recons_data[k][int(k2) - 1]
 
-        recons_data = DataFrame(test_data).to_dict("series", mapping)
+        recons_data = DataFrame(test_data).to_dict("series", into=mapping)
 
         for k, v in test_data.items():
             for k2, v2 in v.items():
                 assert v2 == recons_data[k][k2]
 
-        recons_data = DataFrame(test_data).to_dict("split", mapping)
+        recons_data = DataFrame(test_data).to_dict("split", into=mapping)
         expected_split = {
             "columns": ["A", "B"],
             "index": ["1", "2", "3"],
@@ -120,7 +124,7 @@ class TestDataFrameToDict:
         }
         tm.assert_dict_equal(recons_data, expected_split)
 
-        recons_data = DataFrame(test_data).to_dict("records", mapping)
+        recons_data = DataFrame(test_data).to_dict("records", into=mapping)
         expected_records = [
             {"A": 1.0, "B": "1"},
             {"A": 2.0, "B": "2"},
@@ -150,7 +154,7 @@ class TestDataFrameToDict:
     @pytest.mark.parametrize("mapping", [list, defaultdict, []])
     def test_to_dict_errors(self, mapping):
         # GH#16122
-        df = DataFrame(np.random.randn(3, 3))
+        df = DataFrame(np.random.default_rng(2).standard_normal((3, 3)))
         msg = "|".join(
             [
                 "unsupported type: <class 'list'>",
@@ -164,8 +168,23 @@ class TestDataFrameToDict:
         # GH#16927: When converting to a dict, if a column has a non-unique name
         # it will be dropped, throwing a warning.
         df = DataFrame([[1, 2, 3]], columns=["a", "a", "b"])
-        with tm.assert_produces_warning(UserWarning):
+        with tm.assert_produces_warning(UserWarning, match="columns will be omitted"):
             df.to_dict()
+
+    @pytest.mark.filterwarnings("ignore::UserWarning")
+    @pytest.mark.parametrize(
+        "orient,expected",
+        [
+            ("list", {"A": [2, 5], "B": [3, 6]}),
+            ("dict", {"A": {0: 2, 1: 5}, "B": {0: 3, 1: 6}}),
+        ],
+    )
+    def test_to_dict_not_unique(self, orient, expected):
+        # GH#54824: This is to make sure that dataframes with non-unique column
+        # would have uniform behavior throughout different orients
+        df = DataFrame([[1, 2, 3], [4, 5, 6]], columns=["A", "A", "B"])
+        result = df.to_dict(orient)
+        assert result == expected
 
     # orient - orient argument to to_dict function
     # item_getter - function for extracting value from
@@ -192,15 +211,15 @@ class TestDataFrameToDict:
         # GH#18372 When converting to dict with orient='records' columns of
         # datetime that are tz-aware were not converted to required arrays
         data = [
-            (datetime(2017, 11, 18, 21, 53, 0, 219225, tzinfo=pytz.utc),),
-            (datetime(2017, 11, 18, 22, 6, 30, 61810, tzinfo=pytz.utc),),
+            (datetime(2017, 11, 18, 21, 53, 0, 219225, tzinfo=timezone.utc),),
+            (datetime(2017, 11, 18, 22, 6, 30, 61810, tzinfo=timezone.utc),),
         ]
         df = DataFrame(list(data), columns=["d"])
 
         result = df.to_dict(orient="records")
         expected = [
-            {"d": Timestamp("2017-11-18 21:53:00.219225+0000", tz=pytz.utc)},
-            {"d": Timestamp("2017-11-18 22:06:30.061810+0000", tz=pytz.utc)},
+            {"d": Timestamp("2017-11-18 21:53:00.219225+0000", tz=timezone.utc)},
+            {"d": Timestamp("2017-11-18 22:06:30.061810+0000", tz=timezone.utc)},
         ]
         tm.assert_dict_equal(result[0], expected[0])
         tm.assert_dict_equal(result[1], expected[1])
@@ -380,6 +399,16 @@ class TestDataFrameToDict:
                     "b": [float, float, float],
                 },
             ),
+            (  # Make sure we have one df which is all object type cols
+                {
+                    "a": [1, "hello", 3],
+                    "b": [1.1, "world", 3.3],
+                },
+                {
+                    "a": [int, str, int],
+                    "b": [float, str, float],
+                },
+            ),
         ),
     )
     def test_to_dict_returns_native_types(self, orient, data, expected_types):
@@ -421,3 +450,92 @@ class TestDataFrameToDict:
         for i, key, value in assertion_iterator:
             assert value == data[key][i]
             assert type(value) is expected_types[key][i]
+
+    @pytest.mark.parametrize("orient", ["dict", "list", "series", "records", "index"])
+    def test_to_dict_index_false_error(self, orient):
+        # GH#46398
+        df = DataFrame({"col1": [1, 2], "col2": [3, 4]}, index=["row1", "row2"])
+        msg = "'index=False' is only valid when 'orient' is 'split' or 'tight'"
+        with pytest.raises(ValueError, match=msg):
+            df.to_dict(orient=orient, index=False)
+
+    @pytest.mark.parametrize(
+        "orient, expected",
+        [
+            ("split", {"columns": ["col1", "col2"], "data": [[1, 3], [2, 4]]}),
+            (
+                "tight",
+                {
+                    "columns": ["col1", "col2"],
+                    "data": [[1, 3], [2, 4]],
+                    "column_names": [None],
+                },
+            ),
+        ],
+    )
+    def test_to_dict_index_false(self, orient, expected):
+        # GH#46398
+        df = DataFrame({"col1": [1, 2], "col2": [3, 4]}, index=["row1", "row2"])
+        result = df.to_dict(orient=orient, index=False)
+        tm.assert_dict_equal(result, expected)
+
+    @pytest.mark.parametrize(
+        "orient, expected",
+        [
+            ("dict", {"a": {0: 1, 1: None}}),
+            ("list", {"a": [1, None]}),
+            ("split", {"index": [0, 1], "columns": ["a"], "data": [[1], [None]]}),
+            (
+                "tight",
+                {
+                    "index": [0, 1],
+                    "columns": ["a"],
+                    "data": [[1], [None]],
+                    "index_names": [None],
+                    "column_names": [None],
+                },
+            ),
+            ("records", [{"a": 1}, {"a": None}]),
+            ("index", {0: {"a": 1}, 1: {"a": None}}),
+        ],
+    )
+    def test_to_dict_na_to_none(self, orient, expected):
+        # GH#50795
+        df = DataFrame({"a": [1, NA]}, dtype="Int64")
+        result = df.to_dict(orient=orient)
+        assert result == expected
+
+    def test_to_dict_masked_native_python(self):
+        # GH#34665
+        df = DataFrame({"a": Series([1, 2], dtype="Int64"), "B": 1})
+        result = df.to_dict(orient="records")
+        assert isinstance(result[0]["a"], int)
+
+        df = DataFrame({"a": Series([1, NA], dtype="Int64"), "B": 1})
+        result = df.to_dict(orient="records")
+        assert isinstance(result[0]["a"], int)
+
+    def test_to_dict_tight_no_warning_with_duplicate_column(self):
+        # GH#58281
+        df = DataFrame([[1, 2], [3, 4], [5, 6]], columns=["A", "A"])
+        with tm.assert_produces_warning(None):
+            result = df.to_dict(orient="tight")
+        expected = {
+            "index": [0, 1, 2],
+            "columns": ["A", "A"],
+            "data": [[1, 2], [3, 4], [5, 6]],
+            "index_names": [None],
+            "column_names": [None],
+        }
+        assert result == expected
+
+
+@pytest.mark.parametrize(
+    "val", [Timestamp(2020, 1, 1), Timedelta(1), Period("2020"), Interval(1, 2)]
+)
+def test_to_dict_list_pd_scalars(val):
+    # GH 54824
+    df = DataFrame({"a": [val]})
+    result = df.to_dict(orient="list")
+    expected = {"a": [val]}
+    assert result == expected

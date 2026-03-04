@@ -1,12 +1,13 @@
 """
- This module contains the spatial lookup types, and the `get_geo_where_clause`
- routine for Oracle Spatial.
+This module contains the spatial lookup types, and the `get_geo_where_clause`
+routine for Oracle Spatial.
 
- Please note that WKT support is broken on the XE version, and thus
- this backend will not work on such platforms.  Specifically, XE lacks
- support for an internal JVM, and Java libraries are required to use
- the WKT constructors.
+Please note that WKT support is broken on the XE version, and thus
+this backend will not work on such platforms. Specifically, XE lacks
+support for an internal JVM, and Java libraries are required to use
+the WKT constructors.
 """
+
 import re
 
 from django.contrib.gis.db import models
@@ -17,6 +18,7 @@ from django.contrib.gis.geos.geometry import GEOSGeometry, GEOSGeometryBase
 from django.contrib.gis.geos.prototypes.io import wkb_r
 from django.contrib.gis.measure import Distance
 from django.db.backends.oracle.operations import DatabaseOperations
+from django.utils.functional import cached_property
 
 DEFAULT_TOLERANCE = "0.05"
 
@@ -54,7 +56,6 @@ class SDORelate(SpatialOperator):
 
 
 class OracleOperations(BaseSpatialOperations, DatabaseOperations):
-
     name = "oracle"
     oracle = True
     disallowed_aggregates = (models.Collect, models.Extent3D, models.MakeLine)
@@ -76,6 +77,8 @@ class OracleOperations(BaseSpatialOperations, DatabaseOperations):
         "Difference": "SDO_GEOM.SDO_DIFFERENCE",
         "Distance": "SDO_GEOM.SDO_DISTANCE",
         "Envelope": "SDO_GEOM_MBR",
+        "FromWKB": "SDO_UTIL.FROM_WKBGEOMETRY",
+        "FromWKT": "SDO_UTIL.FROM_WKTGEOMETRY",
         "Intersection": "SDO_GEOM.SDO_INTERSECTION",
         "IsValid": "SDO_GEOM.VALIDATE_GEOMETRY_WITH_CONTEXT",
         "Length": "SDO_GEOM.SDO_LENGTH",
@@ -92,7 +95,7 @@ class OracleOperations(BaseSpatialOperations, DatabaseOperations):
     # We want to get SDO Geometries as WKT because it is much easier to
     # instantiate GEOS proxies from WKT than SDO_GEOMETRY(...) strings.
     # However, this adversely affects performance (i.e., Java is called
-    # to convert to WKT on every query).  If someone wishes to write a
+    # to convert to WKT on every query). If someone wishes to write a
     # SDO_GEOMETRY(...) parser in Python, let me know =)
     select = "SDO_UTIL.TO_WKBGEOMETRY(%s)"
 
@@ -115,20 +118,28 @@ class OracleOperations(BaseSpatialOperations, DatabaseOperations):
         "dwithin": SDODWithin(),
     }
 
-    unsupported_functions = {
-        "AsKML",
-        "AsSVG",
-        "Azimuth",
-        "ForcePolygonCW",
-        "GeoHash",
-        "GeometryDistance",
-        "LineLocatePoint",
-        "MakeValid",
-        "MemSize",
-        "Scale",
-        "SnapToGrid",
-        "Translate",
-    }
+    @cached_property
+    def unsupported_functions(self):
+        unsupported = {
+            "AsKML",
+            "AsSVG",
+            "Azimuth",
+            "ClosestPoint",
+            "ForcePolygonCW",
+            "GeoHash",
+            "GeometryDistance",
+            "IsEmpty",
+            "LineLocatePoint",
+            "MakeValid",
+            "MemSize",
+            "Rotate",
+            "Scale",
+            "SnapToGrid",
+            "Translate",
+        }
+        if self.connection.oracle_version < (23,):
+            unsupported.add("GeometryType")
+        return unsupported
 
     def geo_quote_name(self, name):
         return super().geo_quote_name(name).upper()
@@ -216,8 +227,8 @@ class OracleOperations(BaseSpatialOperations, DatabaseOperations):
         return OracleSpatialRefSys
 
     def modify_insert_params(self, placeholder, params):
-        """Drop out insert parameters for NULL placeholder. Needed for Oracle Spatial
-        backend due to #10888.
+        """Drop out insert parameters for NULL placeholder. Needed for Oracle
+        Spatial backend due to #10888.
         """
         if placeholder == "NULL":
             return []

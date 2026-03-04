@@ -1,7 +1,8 @@
 "Database cache backend."
+
 import base64
 import pickle
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from django.conf import settings
 from django.core.cache.backends.base import DEFAULT_TIMEOUT, BaseCache
@@ -40,7 +41,6 @@ class BaseDatabaseCache(BaseCache):
 
 
 class DatabaseCache(BaseDatabaseCache):
-
     # This class uses cursors provided by the database connection. This means
     # it reads expiration values as aware or naive datetimes, depending on the
     # value of USE_TZ and whether the database supports time zones. The ORM's
@@ -125,7 +125,7 @@ class DatabaseCache(BaseDatabaseCache):
             if timeout is None:
                 exp = datetime.max
             else:
-                tz = timezone.utc if settings.USE_TZ else None
+                tz = UTC if settings.USE_TZ else None
                 exp = datetime.fromtimestamp(timeout, tz=tz)
             exp = exp.replace(microsecond=0)
             if num > self._max_entries:
@@ -136,9 +136,9 @@ class DatabaseCache(BaseDatabaseCache):
             b64encoded = base64.b64encode(pickled).decode("latin1")
             try:
                 # Note: typecasting for datetimes is needed by some 3rd party
-                # database backends. All core backends work without typecasting,
-                # so be careful about changes here - test suite will NOT pick
-                # regressions.
+                # database backends. All core backends work without
+                # typecasting, so be careful about changes here - test suite
+                # will NOT pick regressions.
                 with transaction.atomic(using=db):
                     cursor.execute(
                         "SELECT %s, %s FROM %s WHERE %s = %%s"
@@ -198,7 +198,8 @@ class DatabaseCache(BaseDatabaseCache):
                     else:
                         return False  # touch failed.
             except DatabaseError:
-                # To be threadsafe, updates/inserts are allowed to fail silently
+                # To be threadsafe, updates/inserts are allowed to fail
+                # silently
                 return False
             else:
                 return True

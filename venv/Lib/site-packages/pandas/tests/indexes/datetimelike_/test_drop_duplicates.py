@@ -35,12 +35,20 @@ class DropDuplicates:
     @pytest.mark.parametrize(
         "keep, expected, index",
         [
-            ("first", np.concatenate(([False] * 10, [True] * 5)), np.arange(0, 10)),
-            ("last", np.concatenate(([True] * 5, [False] * 10)), np.arange(5, 15)),
+            (
+                "first",
+                np.concatenate(([False] * 10, [True] * 5)),
+                np.arange(0, 10, dtype=np.int64),
+            ),
+            (
+                "last",
+                np.concatenate(([True] * 5, [False] * 10)),
+                np.arange(5, 15, dtype=np.int64),
+            ),
             (
                 False,
                 np.concatenate(([True] * 5, [False] * 5, [True] * 5)),
-                np.arange(5, 10),
+                np.arange(5, 10, dtype=np.int64),
             ),
         ],
     )
@@ -55,26 +63,39 @@ class DropDuplicates:
         tm.assert_index_equal(result, expected)
 
         result = Series(idx).drop_duplicates(keep=keep)
-        tm.assert_series_equal(result, Series(expected, index=index))
+        expected = Series(expected, index=index)
+        tm.assert_series_equal(result, expected)
 
 
 class TestDropDuplicatesPeriodIndex(DropDuplicates):
-    @pytest.fixture(params=["D", "3D", "H", "2H", "T", "2T", "S", "3S"])
+    @pytest.fixture(params=["D", "3D", "h", "2h", "min", "2min", "s", "3s"])
     def freq(self, request):
+        """
+        Fixture to test for different frequencies for PeriodIndex.
+        """
         return request.param
 
     @pytest.fixture
     def idx(self, freq):
+        """
+        Fixture to get PeriodIndex for 10 periods for different frequencies.
+        """
         return period_range("2011-01-01", periods=10, freq=freq, name="idx")
 
 
 class TestDropDuplicatesDatetimeIndex(DropDuplicates):
     @pytest.fixture
     def idx(self, freq_sample):
+        """
+        Fixture to get DatetimeIndex for 10 periods for different frequencies.
+        """
         return date_range("2011-01-01", freq=freq_sample, periods=10, name="idx")
 
 
 class TestDropDuplicatesTimedeltaIndex(DropDuplicates):
     @pytest.fixture
     def idx(self, freq_sample):
+        """
+        Fixture to get TimedeltaIndex for 10 periods for different frequencies.
+        """
         return timedelta_range("1 day", periods=10, freq=freq_sample, name="idx")

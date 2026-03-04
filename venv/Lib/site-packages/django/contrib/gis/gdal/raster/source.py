@@ -12,6 +12,7 @@ from ctypes import (
     c_void_p,
     string_at,
 )
+from pathlib import Path
 
 from django.contrib.gis.gdal.driver import Driver
 from django.contrib.gis.gdal.error import GDALException
@@ -83,7 +84,8 @@ class GDALRaster(GDALRasterBase):
             ds_input = json.loads(ds_input)
 
         # If input is a valid file path, try setting file as source.
-        if isinstance(ds_input, str):
+        if isinstance(ds_input, (str, Path)):
+            ds_input = str(ds_input)
             if not ds_input.startswith(VSI_FILESYSTEM_PREFIX) and not os.path.exists(
                 ds_input
             ):
@@ -202,7 +204,8 @@ class GDALRaster(GDALRasterBase):
             if "skew" in ds_input:
                 self.skew.x, self.skew.y = ds_input["skew"]
         elif isinstance(ds_input, c_void_p):
-            # Instantiate the object using an existing pointer to a gdal raster.
+            # Instantiate the object using an existing pointer to a gdal
+            # raster.
             self._ptr = ds_input
         else:
             raise GDALException(
@@ -408,11 +411,12 @@ class GDALRaster(GDALRasterBase):
         name of the source raster will be used and appended with
         _copy. + source_driver_name.
 
-        In addition, the resampling algorithm can be specified with the "resampling"
-        input parameter. The default is NearestNeighbor. For a list of all options
-        consult the GDAL_RESAMPLE_ALGORITHMS constant.
+        In addition, the resampling algorithm can be specified with the
+        "resampling" input parameter. The default is NearestNeighbor. For a
+        list of all options consult the GDAL_RESAMPLE_ALGORITHMS constant.
         """
-        # Get the parameters defining the geotransform, srid, and size of the raster
+        # Get the parameters defining the geotransform, srid, and size of the
+        # raster
         ds_input.setdefault("width", self.width)
         ds_input.setdefault("height", self.height)
         ds_input.setdefault("srid", self.srs.srid)

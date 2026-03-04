@@ -8,7 +8,7 @@ import pandas._testing as tm
 
 def test_fillna(idx):
     # GH 11343
-    msg = "isna is not defined for MultiIndex"
+    msg = "fillna is not defined for MultiIndex"
     with pytest.raises(NotImplementedError, match=msg):
         idx.fillna(idx[0])
 
@@ -85,7 +85,6 @@ def test_hasnans_isnans(idx):
 
 
 def test_nan_stays_float():
-
     # GH 7031
     idx0 = MultiIndex(levels=[["A", "B"], []], codes=[[1, 0], [-1, -1]], names=[0, 1])
     idx1 = MultiIndex(levels=[["C"], ["D"]], codes=[[0], [0]], names=[0, 1])

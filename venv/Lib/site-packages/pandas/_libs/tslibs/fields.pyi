@@ -16,7 +16,7 @@ def get_date_name_field(
 def get_start_end_field(
     dtindex: npt.NDArray[np.int64],
     field: str,
-    freqstr: str | None = ...,
+    freq_name: str | None = ...,
     month_kw: int = ...,
     reso: int = ...,  # NPY_DATETIMEUNIT
 ) -> npt.NDArray[np.bool_]: ...
@@ -30,6 +30,10 @@ def get_timedelta_field(
     field: str,
     reso: int = ...,  # NPY_DATETIMEUNIT
 ) -> npt.NDArray[np.int32]: ...
+def get_timedelta_days(
+    tdindex: npt.NDArray[np.int64],  # const int64_t[:]
+    reso: int = ...,  # NPY_DATETIMEUNIT
+) -> npt.NDArray[np.int64]: ...
 def isleapyear_arr(
     years: np.ndarray,
 ) -> npt.NDArray[np.bool_]: ...

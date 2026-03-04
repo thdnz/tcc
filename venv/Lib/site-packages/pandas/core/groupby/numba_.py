@@ -1,4 +1,5 @@
 """Common utilities for Numba operations with groupby ops"""
+
 from __future__ import annotations
 
 import functools
@@ -6,18 +7,21 @@ import inspect
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
 )
 
 import numpy as np
 
-from pandas._typing import Scalar
 from pandas.compat._optional import import_optional_dependency
 
 from pandas.core.util.numba_ import (
     NumbaUtilError,
     jit_user_function,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from pandas._typing import Scalar
 
 
 def validate_udf(func: Callable) -> None:
@@ -59,7 +63,7 @@ def validate_udf(func: Callable) -> None:
         )
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def generate_numba_agg_func(
     func: Callable[..., Scalar],
     nopython: bool,
@@ -90,7 +94,7 @@ def generate_numba_agg_func(
     -------
     Numba function
     """
-    numba_func = jit_user_function(func, nopython, nogil, parallel)
+    numba_func = jit_user_function(func)
     if TYPE_CHECKING:
         import numba
     else:
@@ -105,7 +109,6 @@ def generate_numba_agg_func(
         num_columns: int,
         *args: Any,
     ) -> np.ndarray:
-
         assert len(begin) == len(end)
         num_groups = len(begin)
 
@@ -120,7 +123,7 @@ def generate_numba_agg_func(
     return group_agg
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def generate_numba_transform_func(
     func: Callable[..., np.ndarray],
     nopython: bool,
@@ -151,7 +154,7 @@ def generate_numba_transform_func(
     -------
     Numba function
     """
-    numba_func = jit_user_function(func, nopython, nogil, parallel)
+    numba_func = jit_user_function(func)
     if TYPE_CHECKING:
         import numba
     else:
@@ -166,7 +169,6 @@ def generate_numba_transform_func(
         num_columns: int,
         *args: Any,
     ) -> np.ndarray:
-
         assert len(begin) == len(end)
         num_groups = len(begin)
 

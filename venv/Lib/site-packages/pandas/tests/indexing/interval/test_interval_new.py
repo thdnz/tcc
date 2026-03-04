@@ -3,7 +3,7 @@ import re
 import numpy as np
 import pytest
 
-from pandas.compat import IS64
+from pandas.compat import WASM
 
 from pandas import (
     Index,
@@ -17,10 +17,12 @@ import pandas._testing as tm
 class TestIntervalIndex:
     @pytest.fixture
     def series_with_interval_index(self):
+        """
+        Fixture providing a Series with an IntervalIndex.
+        """
         return Series(np.arange(5), IntervalIndex.from_breaks(np.arange(6)))
 
     def test_loc_with_interval(self, series_with_interval_index, indexer_sl):
-
         # loc with single label / list of labels:
         #   - Intervals: only exact matches
         #   - scalars: those that contain it
@@ -51,7 +53,6 @@ class TestIntervalIndex:
             indexer_sl(ser)[Interval(5, 6)]
 
     def test_loc_with_scalar(self, series_with_interval_index, indexer_sl):
-
         # loc with single label / list of labels:
         #   - Intervals: only exact matches
         #   - scalars: those that contain it
@@ -74,7 +75,6 @@ class TestIntervalIndex:
         tm.assert_series_equal(expected, indexer_sl(ser)[ser >= 2])
 
     def test_loc_with_slices(self, series_with_interval_index, indexer_sl):
-
         # loc with slices:
         #   - Interval objects: only works with exact matches
         #   - scalars: only works for non-overlapping, monotonic intervals,
@@ -129,7 +129,6 @@ class TestIntervalIndex:
             ser[0 : 4 : Interval(0, 1)]
 
     def test_loc_with_overlap(self, indexer_sl):
-
         idx = IntervalIndex.from_tuples([(1, 5), (3, 7)])
         ser = Series(range(len(idx)), index=idx)
 
@@ -144,7 +143,7 @@ class TestIntervalIndex:
         # interval
         expected = 0
         result = indexer_sl(ser)[Interval(1, 5)]
-        result == expected
+        assert expected == result
 
         expected = ser
         result = indexer_sl(ser)[[Interval(1, 5), Interval(3, 7)]]
@@ -153,7 +152,10 @@ class TestIntervalIndex:
         with pytest.raises(KeyError, match=re.escape("Interval(3, 5, closed='right')")):
             indexer_sl(ser)[Interval(3, 5)]
 
-        msg = r"None of \[\[Interval\(3, 5, closed='right'\)\]\]"
+        msg = (
+            r"None of \[IntervalIndex\(\[\(3, 5\]\], "
+            r"dtype='interval\[int64, right\]'\)\] are in the \[index\]"
+        )
         with pytest.raises(KeyError, match=msg):
             indexer_sl(ser)[[Interval(3, 5)]]
 
@@ -162,8 +164,10 @@ class TestIntervalIndex:
         result = indexer_sl(ser)[Interval(1, 5) : Interval(3, 7)]
         tm.assert_series_equal(expected, result)
 
-        msg = "'can only get slices from an IntervalIndex if bounds are"
-        " non-overlapping and all monotonic increasing or decreasing'"
+        msg = (
+            "'can only get slices from an IntervalIndex if bounds are "
+            "non-overlapping and all monotonic increasing or decreasing'"
+        )
         with pytest.raises(KeyError, match=msg):
             indexer_sl(ser)[Interval(1, 6) : Interval(3, 8)]
 
@@ -174,7 +178,6 @@ class TestIntervalIndex:
                 ser.loc[1:4]
 
     def test_non_unique(self, indexer_sl):
-
         idx = IntervalIndex.from_tuples([(1, 3), (3, 7)])
         ser = Series(range(len(idx)), index=idx)
 
@@ -186,7 +189,6 @@ class TestIntervalIndex:
         tm.assert_series_equal(expected, result)
 
     def test_non_unique_moar(self, indexer_sl):
-
         idx = IntervalIndex.from_tuples([(1, 3), (1, 3), (3, 7)])
         ser = Series(range(len(idx)), index=idx)
 
@@ -212,7 +214,7 @@ class TestIntervalIndex:
             obj.loc[[4, 5, 6]]
 
 
-@pytest.mark.xfail(not IS64, reason="GH 23440")
+@pytest.mark.xfail(WASM, reason="GH 23440")
 @pytest.mark.parametrize(
     "intervals",
     [

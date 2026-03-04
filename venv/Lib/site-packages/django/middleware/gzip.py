@@ -1,7 +1,7 @@
 from django.utils.cache import patch_vary_headers
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.regex_helper import _lazy_re_compile
-from django.utils.text import compress_sequence, compress_string
+from django.utils.text import acompress_sequence, compress_sequence, compress_string
 
 re_accepts_gzip = _lazy_re_compile(r"\bgzip\b")
 
@@ -12,6 +12,8 @@ class GZipMiddleware(MiddlewareMixin):
     Set the Vary header accordingly, so that caches will base their storage
     on the Accept-Encoding header.
     """
+
+    max_random_bytes = 100
 
     def process_response(self, request, response):
         # It's not worth attempting to compress really short responses.
@@ -29,20 +31,32 @@ class GZipMiddleware(MiddlewareMixin):
             return response
 
         if response.streaming:
+            if response.is_async:
+                response.streaming_content = acompress_sequence(
+                    response.streaming_content,
+                    max_random_bytes=self.max_random_bytes,
+                )
+            else:
+                response.streaming_content = compress_sequence(
+                    response.streaming_content,
+                    max_random_bytes=self.max_random_bytes,
+                )
             # Delete the `Content-Length` header for streaming content, because
             # we won't know the compressed size until we stream it.
-            response.streaming_content = compress_sequence(response.streaming_content)
             del response.headers["Content-Length"]
         else:
             # Return the compressed content only if it's actually shorter.
-            compressed_content = compress_string(response.content)
+            compressed_content = compress_string(
+                response.content,
+                max_random_bytes=self.max_random_bytes,
+            )
             if len(compressed_content) >= len(response.content):
                 return response
             response.content = compressed_content
             response.headers["Content-Length"] = str(len(response.content))
 
         # If there is a strong ETag, make it weak to fulfill the requirements
-        # of RFC 7232 section-2.1 while also allowing conditional request
+        # of RFC 9110 Section 8.8.1 while also allowing conditional request
         # matches on ETags.
         etag = response.get("ETag")
         if etag and etag.startswith('"'):
