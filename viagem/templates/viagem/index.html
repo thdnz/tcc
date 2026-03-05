@@ -1,46 +1,274 @@
 {% extends 'paginas/base.html' %}
+{% load static %}
+
+{% block titulo %}<title>Escolha seus Destinos — TravelAI</title>{% endblock %}
+
+{% block styles %}
+<style>
+    .dest-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 1.5rem 0;
+    }
+
+    .dest-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        cursor: pointer;
+        height: 180px;
+        border: 3px solid transparent;
+        transition: all .25s ease;
+        display: block;
+    }
+
+    .dest-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform .35s ease;
+    }
+
+    .dest-card:hover img {
+        transform: scale(1.07);
+    }
+
+    .dest-card .overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.1) 60%);
+        transition: background .25s;
+    }
+
+    .dest-card:hover .overlay {
+        background: linear-gradient(to top, rgba(13, 71, 161, 0.82) 0%, rgba(13, 71, 161, 0.2) 70%);
+    }
+
+    .dest-card .label {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: .75rem 1rem;
+        color: #fff;
+        font-weight: 600;
+        font-size: .9rem;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .dest-card .checkmark {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: transparent;
+        font-size: .8rem;
+        transition: all .2s;
+    }
+
+    .dest-card.selected {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+    }
+
+    .dest-card.selected .checkmark {
+        background: #38bdf8;
+        border-color: #38bdf8;
+        color: #fff;
+    }
+
+    .dest-card.selected .overlay {
+        background: linear-gradient(to top, rgba(13, 71, 161, 0.85) 0%, rgba(56, 189, 248, 0.15) 70%);
+    }
+
+    input[type=checkbox].hidden-cb {
+        display: none;
+    }
+
+    .btn-primary-custom:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+</style>
+{% endblock %}
 
 {% block conteudo %}
 
-<div class="row">
-    <div class="mx-auto h2">
-        Sistema de recomendação de viagem
+<div class="page-header">
+    <h1><i class="fas fa-map-marked-alt mr-2" style="color:#38bdf8;"></i>Selecione seus Destinos</h1>
+    <p>Clique nos destinos que você já visitou e descubra novos lugares para conhecer.</p>
+</div>
+
+<form action="{% url 'recomendacao' %}" method="POST" id="form-destinos">
+    {% csrf_token %}
+
+    <div class="d-flex align-items-center mb-3" style="gap:12px;">
+        <span style="color:#94a3b8;font-size:.9rem;">Selecione pelo menos 1 destino:</span>
+        <span class="badge-selected" id="contador">0 selecionados</span>
     </div>
-</div>
 
-<div class="row mt-5">
-    <div class="mx-auto h4">
-        Selecione um destino visitado   
-    </div> 
-</div>
-<div class="row">
-    <div class="col-12">
-    <form action="{% url 'recomendacao' %}" method="POST">
-        {% csrf_token %}
-        <select class="custom-select custom-select-lg" name="valor-recomendacao" size=15 multiple>
-            <option value="Bento Gonçalves">Bento Gonçalves</option>
-            <option value="Bonito">Bonito</option>
-            <option value="Cabaceiras">Cabaceiras</option>
-            <option value="Chapada dos Guimaraes">Chapada dos Guimaraes</option>
-            <option value="Chapada dos Veadeiros">Chapada dos Veadeiros</option>
-            <option value="Fernando Noronha">Fernando Noronha</option>
-            <option value="Floresta Amazonica">Floresta Amazonica</option>
-            <option value="Floripa">Floripa</option>
-            <option value="Olinda">Olinda</option>
-            <option value="Ouro Preto">Ouro Preto</option>
-            <option value="Paraty">Paraty</option>
-            <option value="Porto Alegre">Porto Alegre</option>
-            <option value="Rio de Janeiro">Rio de Janeiro</option>
-            <option value="Salvador">Salvador</option>
-            <option value="Sao Paulo">Sao Paulo</option>
-        </select>
-        <div class="row mt-3">
-            <div class="mx-auto">
-                <button class="btn btn-primary">Recomendar</button>
-            </div>
-        </div>
-    </form>
-</div>
+    <div class="dest-grid">
+
+        {% with destinos_imgs=None %}
+
+        {% for destino in destinos_list %}{% endfor %}
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Bento Gonçalves">
+            <img src="{% static 'img/destinos/bento_goncalves.png' %}" alt="Bento Gonçalves" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🍷 Bento Gonçalves</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Bonito">
+            <img src="{% static 'img/destinos/bonito.png' %}" alt="Bonito" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🏞️ Bonito</div>
+        </label>
 
 
-{% endblock conteudo %}
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Chapada dos Guimaraes">
+            <img src="{% static 'img/destinos/chapada_guimaraes.png' %}" alt="Chapada dos Guimarães" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🏔️ Chapada dos Guimarães</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Chapada dos Veadeiros">
+            <img src="{% static 'img/destinos/chapada_veadeiros.png' %}" alt="Chapada dos Veadeiros" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🦌 Chapada dos Veadeiros</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Fernando Noronha">
+            <img src="{% static 'img/destinos/fernando_noronha.png' %}" alt="Fernando Noronha" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🏝️ Fernando Noronha</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Floresta Amazonica">
+            <img src="{% static 'img/destinos/floresta_amazonica.png' %}" alt="Floresta Amazônica" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🌿 Floresta Amazônica</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Floripa">
+            <img src="{% static 'img/destinos/floripa.png' %}" alt="Florianópolis" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🌊 Florianópolis</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Olinda">
+            <img src="{% static 'img/destinos/olinda.png' %}" alt="Olinda" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🎭 Olinda</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Ouro Preto">
+            <img src="{% static 'img/destinos/ouro_preto.png' %}" alt="Ouro Preto" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">⛪ Ouro Preto</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Paraty">
+            <img src="{% static 'img/destinos/paraty.png' %}" alt="Paraty" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">⛵ Paraty</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Porto Alegre">
+            <img src="{% static 'img/destinos/porto_alegre.png' %}" alt="Porto Alegre" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🏙️ Porto Alegre</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Rio de Janeiro">
+            <img src="{% static 'img/destinos/rio_de_janeiro.png' %}" alt="Rio de Janeiro" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🗽 Rio de Janeiro</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Salvador">
+            <img src="{% static 'img/destinos/salvador.png' %}" alt="Salvador" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🥁 Salvador</div>
+        </label>
+
+        <label class="dest-card" onclick="toggleCard(this)">
+            <input class="hidden-cb" type="checkbox" name="valor-recomendacao" value="Sao Paulo">
+            <img src="{% static 'img/destinos/sao_paulo.png' %}" alt="São Paulo" loading="lazy">
+            <div class="overlay"></div>
+            <div class="checkmark"><i class="fas fa-check"></i></div>
+            <div class="label">🌆 São Paulo</div>
+        </label>
+
+        {% endwith %}
+    </div>
+
+    <div class="text-center mt-4">
+        <button type="submit" class="btn-primary-custom" id="btn-recomendar" disabled>
+            <i class="fas fa-compass mr-2"></i> Descobrir Destinos
+        </button>
+        <p style="color:#475569;font-size:.8rem;margin-top:.75rem;" id="hint-text">Selecione pelo menos 1 destino para
+            continuar</p>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleCard(card) {
+        const cb = card.querySelector('input[type=checkbox]');
+        cb.checked = !cb.checked;
+        card.classList.toggle('selected', cb.checked);
+        updateUI();
+    }
+
+    function updateUI() {
+        const total = document.querySelectorAll('input[type=checkbox]:checked').length;
+        const contador = document.getElementById('contador');
+        const btn = document.getElementById('btn-recomendar');
+        const hint = document.getElementById('hint-text');
+        contador.textContent = total + (total === 1 ? ' selecionado' : ' selecionados');
+        btn.disabled = total === 0;
+        hint.style.display = total > 0 ? 'none' : 'block';
+    }
+    updateUI();
+</script>
+{% endblock %}

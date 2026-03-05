@@ -1,43 +1,280 @@
-{% extends 'paginas/base.html' %}
-
 {% load static %}
+<!doctype html>
+<html lang="pt-br">
 
-{% load crispy_forms_tags %}
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Entrar — TravelAI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+        crossorigin="anonymous" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-{% block titulo %} <title>Login</title> {% endblock %}
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
 
-{% block conteudo %}
-                <div class="row border-radius bg-cinza-escuro col-md-6 mx-auto">
-                <div class="col-md-7.5 mx-auto mt-3">
-                    <img src="{% static 'img/logo-maior.jpg' %}" alt="logo super survey" width="237" height="235">
-                </div>    
-                {% if request.user.is_authenticated %}
-                <h3> Ação não permitida </h3>
+        /* Left panel */
+        .login-left {
+            flex: 1;
+            background: linear-gradient(145deg, #0d47a1 0%, #1565c0 40%, #0288d1 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
 
-                <p class="lead">
-                    <strong>
-                        Houve algum problema para processar a ação desejada ou você não tem permissão para isso.
-                    </strong>
-                </p>
+        .login-left::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            top: -100px;
+            right: -100px;
+        }
+
+        .login-left::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            bottom: -80px;
+            left: -80px;
+        }
+
+        .login-left .brand-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .login-left h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: .75rem;
+            text-align: center;
+        }
+
+        .login-left p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.75);
+            text-align: center;
+            max-width: 320px;
+            line-height: 1.6;
+        }
+
+        .login-left .features {
+            margin-top: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+        }
+
+        .login-left .feature-item {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: .9rem;
+        }
+
+        .login-left .feature-item i {
+            color: rgba(255, 255, 255, 0.6);
+            width: 20px;
+        }
+
+        /* Right panel */
+        .login-right {
+            width: 440px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem;
+            background: #1e293b;
+            border-left: 1px solid #334155;
+        }
+
+        .login-right h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: .4rem;
+        }
+
+        .login-right .subtitle {
+            color: #94a3b8;
+            font-size: .9rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: .85rem;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: .4rem;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #475569;
+            font-size: .85rem;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            background: #0f172a;
+            border: 1.5px solid #334155;
+            border-radius: 10px;
+            padding: .75rem 1rem .75rem 2.6rem;
+            color: #e2e8f0;
+            font-size: .95rem;
+            font-family: 'Inter', sans-serif;
+            transition: border-color .2s;
+            outline: none;
+        }
+
+        .input-wrap input:focus {
+            border-color: #38bdf8;
+        }
+
+        .input-wrap input::placeholder {
+            color: #475569;
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #0d47a1, #1976d2);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: .85rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            margin-top: .5rem;
+            transition: all .2s;
+            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.4);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(13, 71, 161, 0.5);
+        }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: .75rem 1rem;
+            font-size: .85rem;
+            color: #f87171;
+            margin-bottom: 1rem;
+        }
+
+        .login-footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: #475569;
+            font-size: .8rem;
+        }
+
+        @media (max-width: 768px) {
+            .login-left {
+                display: none;
+            }
+
+            .login-right {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-left">
+        <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;">
+            <div class="brand-icon"><i class="fas fa-plane-departure"></i></div>
+            <h1>TravelAI</h1>
+            <p>Descubra seu próximo destino com recomendações personalizadas baseadas em inteligência artificial.</p>
+            <div class="features">
+                <div class="feature-item"><i class="fas fa-brain"></i> Filtragem colaborativa com KNN</div>
+                <div class="feature-item"><i class="fas fa-map-marked-alt"></i> 15 destinos brasileiros</div>
+                <div class="feature-item"><i class="fas fa-user-check"></i> Recomendações personalizadas</div>
             </div>
+        </div>
     </div>
-</div>
-    {% else %}
 
-    <div class="col-md-10 mx-auto">
+    <div class="login-right">
+        <h2>Bem-vindo de volta 👋</h2>
+        <p class="subtitle">Entre com suas credenciais para acessar o sistema</p>
 
-        <form action="" method="POST">
+        {% if form.errors %}
+        <div class="error-msg">
+            <i class="fas fa-exclamation-circle mr-1"></i>
+            Usuário ou senha incorretos. Tente novamente.
+        </div>
+        {% endif %}
+
+        <form method="POST" action="">
             {% csrf_token %}
-
-            {{ form|crispy }}
-            <div class="col-md-6 mx-auto">
-        <button type="submit" class="btn btn-danger btn-lg btn-block"> Entrar </button>
+            <div class="form-group">
+                <label for="id_username">Usuário</label>
+                <div class="input-wrap">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="id_username" name="username" placeholder="Digite seu usuário"
+                        value="{{ form.username.value|default:'' }}" autocomplete="username">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="id_password">Senha</label>
+                <div class="input-wrap">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="id_password" name="password" placeholder="Digite sua senha"
+                        autocomplete="current-password">
+                </div>
+            </div>
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt mr-2"></i> Entrar
+            </button>
         </form>
-        
-    </div>
-    </div>
-    
-    
-    {% endif %}
 
-{% endblock %}
+        <div class="login-footer">
+            TravelAI · TCC 2022 · Sistema de Recomendação de Viagens
+        </div>
+    </div>
+
+</body>
+
+</html>

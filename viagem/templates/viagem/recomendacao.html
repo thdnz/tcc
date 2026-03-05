@@ -1,33 +1,57 @@
-{% extends 'paginas/base.html' %} 
+{% extends 'paginas/base.html' %}
 
+{% block titulo %}<title>Destinos Recomendados — TravelAI</title>{% endblock %}
 
+{% block conteudo %}
 
-{% block conteudo %} 
+<div class="page-header">
+    <h1><i class="fas fa-star mr-2" style="color:#f59e0b;"></i>Destinos Recomendados</h1>
+    <p>Com base nos seus destinos visitados, encontramos os melhores lugares para você conhecer!</p>
+</div>
 
-<div class="row"> 
-    <div class="mx-auto h2">
-        Destinos recomendados 
+{% if destinos %}
+
+<div class="result-grid">
+    {% for destino in destinos %}
+    <div class="result-card">
+        <span class="r-icon">
+            {% if "Gonçalves" in destino or "Bento" in destino %}🍷
+            {% elif "Bonito" in destino %}🏞️
+            {% elif "Cabaceiras" in destino %}🌵
+            {% elif "Guimaraes" in destino %}🏔️
+            {% elif "Veadeiros" in destino %}🦌
+            {% elif "Noronha" in destino %}🏝️
+            {% elif "Amazonica" in destino or "Amazônica" in destino %}🌿
+            {% elif "Floripa" in destino or "Florianopolis" in destino %}🌊
+            {% elif "Olinda" in destino %}🎭
+            {% elif "Ouro" in destino %}⛪
+            {% elif "Paraty" in destino %}⛵
+            {% elif "Porto Alegre" in destino %}🏙️
+            {% elif "Rio" in destino %}🗽
+            {% elif "Salvador" in destino %}🥁
+            {% elif "Paulo" in destino %}🌆
+            {% else %}✈️
+            {% endif %}
+        </span>
+        <div class="r-name">{{ destino }}</div>
     </div>
+    {% endfor %}
 </div>
 
-<div class="row mt-3">
-    <table class="table table-striped table-dark">
-        <thead>
-        <tr>
-            <th scope="col">Destinos</th>
-
-        </tr>
-        </thead>
-        <tbody>
-        
-            {% for destino in destinos %}
-            <tr></tr>
-            <td>{{destino}}</td>
-            {% endfor %}
-        </tbody>
-    </table>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🗺️</div>
+    <h3 style="margin-top:1rem;font-size:1.2rem;">Nenhum destino encontrado</h3>
+    <p style="margin-top:.5rem;font-size:.9rem;">Tente selecionar outros destinos para obter recomendações.</p>
 </div>
+{% endif %}
 
-
+<div class="text-center mt-4">
+    <a href="{% url 'index' %}">
+        <button class="btn-back">
+            <i class="fas fa-arrow-left mr-2"></i> Voltar e refinar
+        </button>
+    </a>
+</div>
 
 {% endblock %}
